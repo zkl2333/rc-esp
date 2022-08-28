@@ -16,6 +16,8 @@ WiFiUDP Udp;
 
 const unsigned int tcpPort = 1024;
 const unsigned int udpLocalPort = 8266;
+const unsigned int udpRemotePort = 8266;
+String udpRemoteIP = "255.255.255.255";
 
 // void waitTCP()
 // {

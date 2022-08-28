@@ -45,6 +45,14 @@ void Motor(int motor, int dir, int speed)
     analogWrite(PWM, speed);
 }
 
+// 发送UDP消息
+void sendUdp(String msg)
+{
+    Udp.beginPacket(udpRemoteIP.c_str(), udpRemotePort);
+    Udp.write(msg.c_str());
+    Udp.endPacket();
+}
+
 void setup(void)
 {
     Serial.begin(115200);
@@ -69,7 +77,7 @@ void setup(void)
 }
 
 int a1 = 0;
-int a2 = 0;
+int a0 = 0;
 
 // 命令解析
 void commandParsing(String command)
@@ -103,14 +111,14 @@ void commandParsing(String command)
             // 右电机 前进
             Motor(RightMotor, Forward, value.toInt());
         }
-        if (key == "a1" || key == "a2")
+        if (key == "a1" || key == "a0")
         {
             if (key == "a1")
                 a1 = value.toInt();
-            if (key == "a2")
-                a2 = value.toInt();
-            int LeftSpeed = (a1 + a2) / 2;
-            int RightSpeed = (a1 - a2) / 2;
+            if (key == "a0")
+                a0 = value.toInt();
+            int LeftSpeed = (a1 + a0) / 2;
+            int RightSpeed = (a1 - a0) / 2;
             // 停止
             if (LeftSpeed == 0 && RightSpeed == 0)
             {
@@ -126,15 +134,36 @@ void commandParsing(String command)
     }
 }
 
+bool isConnected = false;
+int lastHeartbeat = 0;
+
 void loop(void)
 {
+    // 每10s发送一次心跳包
+    if (lastHeartbeat == 0 || millis() - lastHeartbeat > 10000)
+    {
+        lastHeartbeat = millis();
+        sendUdp("heartbeat");
+    }
+
     // 读取UDP数据
     String line = readUdp();
     // String line = readTCP();
 
     if (line != "")
     {
-        commandParsing(line);
+        // 读取到数据
+        if (line == "heartbeat")
+        {
+            // 收到心跳
+            udpRemoteIP = Udp.remoteIP().toString();
+            isConnected = true;
+        }
+        else
+        {
+            // 收到命令
+            commandParsing(line);
+        }
     }
 
     ESP.wdtFeed(); // 喂 狗
