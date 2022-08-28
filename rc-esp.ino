@@ -1,11 +1,4 @@
 #include "config.h"
-#include <string.h>
-
-WiFiClient client;
-WiFiUDP Udp;
-const char *host = "192.168.8.247";
-const unsigned int tcpPort = 1024;
-const unsigned int udpLocalPort = 8266;
 
 //读取键值
 #define keydown digitalRead(BTN0_PIN)
@@ -31,37 +24,6 @@ void showMenu()
     u8g2.sendBuffer();
 }
 
-void waitTCP()
-{
-    while (!client.connected())
-    {
-        if (client.connect(host, tcpPort))
-        {
-            Serial.println("connected");
-            break;
-        }
-        else
-        {
-            Serial.println("connection failed");
-            delay(1000);
-        }
-    }
-}
-
-void waitWiFi()
-{
-    if (!wifipw.OK())
-    {
-        showMsg("等待配网");
-        return;
-    }
-    if (!wifipw.OK(true))
-    {
-        showMsg("连接失败");
-        return;
-    }
-}
-
 void setup(void)
 {
     Serial.begin(115200);
@@ -69,10 +31,8 @@ void setup(void)
     initDisplay();
     initPin();
     initWiFi();
-    // 等待网络连接
-    waitWiFi();
     // 等待TCP连接
-    waitTCP();
+    // waitTCP();
     // 等待UDP连接
     Udp.begin(udpLocalPort);
     // 看门狗初始化
@@ -114,46 +74,14 @@ void commandParsing(String command)
             analogWrite(LED_PIN, 1000 - value.toInt());
         }
     }
-
-    // if (command == "down")
-    // {
-    //   menu_index++;
-    // }
-    // else if (command == "up")
-    // {
-    //   menu_index--;
-    // }
-}
-
-String readUdp()
-{
-    int packetSize = Udp.parsePacket();
-    if (packetSize)
-    {
-        String line = Udp.readStringUntil(',');
-        return line;
-    }
-    return "";
-}
-
-String readTCP()
-{
-    if (client.available())
-    {
-        String line = client.readStringUntil(',');
-        return line;
-    }
-    return "";
 }
 
 void loop(void)
 {
-    // 网络连接
-    wifipw.Loop();
 
     // 读取UDP数据
-    // String line = readUdp();
-    String line = readTCP();
+    String line = readUdp();
+    // String line = readTCP();
 
     if (line != "")
     {
