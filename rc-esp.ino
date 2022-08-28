@@ -6,6 +6,26 @@
 uint8_t func_index = 0;
 uint8_t menu_index = 0;
 
+// 左电机
+// #define PWM1 3
+// #define AIN1 4
+// #define AIN2 5
+// 右电机
+#define PWM2 12
+#define BIN1 16
+#define BIN2 14
+
+void Motor(int out)
+{
+    // digitalWrite(AIN1, HIGH); // Motor A Rotate Clockwise
+    // digitalWrite(AIN2, LOW);
+    // analogWrite(PWM1, out); // Speed control of Motor A
+    analogWriteRange(1000);
+    digitalWrite(BIN1, HIGH); // Motor B Rotate Clockwise
+    digitalWrite(BIN2, LOW);
+    analogWrite(PWM2, out); // Speed control of Motor B
+}
+
 void showMenu()
 {
     u8g2.clearBuffer();
@@ -37,6 +57,12 @@ void setup(void)
     Udp.begin(udpLocalPort);
     // 看门狗初始化
     ESP.wdtEnable(5000);
+    // pinMode(PWM1, OUTPUT);
+    // pinMode(AIN1, OUTPUT);
+    // pinMode(AIN2, OUTPUT);
+    pinMode(PWM2, OUTPUT);
+    pinMode(BIN1, OUTPUT);
+    pinMode(BIN2, OUTPUT);
 }
 
 // 命令解析
@@ -71,7 +97,8 @@ void commandParsing(String command)
         }
         if (key == "6")
         {
-            analogWrite(LED_PIN, 1000 - value.toInt());
+            // analogWrite(LED_PIN, 1000 - value.toInt());
+            Motor(value.toInt());
         }
     }
 }
@@ -93,7 +120,7 @@ void loop(void)
     switch (func_index)
     {
     case 0:
-        showMenu();
+        // showMenu();
         break;
     default:
         // showTempAndHumidity();
@@ -102,13 +129,11 @@ void loop(void)
 
     if (keydown == LOW)
     {
-        delay(3); //消抖
         if (keydown == LOW)
         {
             u32 last_key_time = millis();
             while (keydown == LOW)
             {
-                delay(5);
                 // 喂 狗
                 ESP.wdtFeed();
             }
